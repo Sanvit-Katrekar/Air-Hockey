@@ -1,0 +1,16 @@
+*
+PLAYER 1:
+—————
+W - Up
+A - Left
+S - Down
+D - Right
+*
+PLAYER 2:
+—————
+I - Up
+J - Left 
+K - Down
+L - Right
+*
+R - Restart Game
