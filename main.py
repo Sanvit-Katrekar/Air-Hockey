@@ -49,7 +49,7 @@ class ControlScreen(Screen):
         base = resourcePath(path=True, subdir=self.subPath)
         frames = [
             pygame.image.load(resourcePath(img, subdir=self.subPath))
-            for img in os.listdir(base) if img.startswith('controls')
+            for img in os.listdir(base) if img.startswith('controls_frame')
             ]
         self.title = Animation(frames, (self.w//4 - 10, 0))
         self.ball = Ball(self.w//2, self.h//2, 20)
@@ -65,7 +65,7 @@ class ControlScreen(Screen):
 
     def displayUI(self):
         ''' Displays the controls text, and inits back button '''
-        xStart = 225
+        xStart = 235
         yStart = 100
         xGap, yGap = 400, 40
         for i in range(len(self.controls)-1):
@@ -113,7 +113,7 @@ class StartScreen(Screen):
         base = resourcePath(path=True, subdir=self.subPath)
         frames = [
             pygame.image.load(resourcePath(img, subdir=self.subPath))
-            for img in os.listdir(base) if img.startswith('start')
+            for img in os.listdir(base) if img.startswith('start_frame')
             ]
         self.title = Animation(frames, (self.w//4 - 10, 0))
         self.sprites = pygame.sprite.Group()
@@ -173,11 +173,27 @@ class PauseScreen(Screen):
     ''' Class for the game pause screen '''
     def __init__(self, screen, scoreToWin, endTime):
         super().__init__(screen)
-        self.backBtn = Button(
+        y = self.h - 60
+        self.endBtn = Button(
             self.screen,
-            (self.w//2-150, self.h-100),
+            (self.w//2-275, y),
+            'End game',
+            pad=5,
+            center=1
+            )
+        self.returnBtn = Button(
+            self.screen,
+            (self.w//2, y),
             'Return to game',
-            pad=5
+            pad=5,
+            center=1
+            )
+        self.restartBtn = Button(
+            self.screen,
+            (self.w//2+300, y),
+            'Restart game',
+            pad=5,
+            center=1
             )
         self.font = pygame.font.SysFont('Verdana', 35)
         delim = '$'
@@ -195,9 +211,10 @@ class PauseScreen(Screen):
         base = resourcePath(path=True, subdir=self.subPath)
         frames = [
             pygame.image.load(resourcePath(img, subdir=self.subPath))
-            for img in os.listdir(base) if img.startswith('pause')
+            for img in os.listdir(base) if img.startswith('pause_frame')
             ]
         self.title = Animation(frames, (self.w//5-5, 0))
+        self.restart = self.endGame = False
         self.pauseTime = time.time()
         self.mainloop()
 
@@ -211,7 +228,9 @@ class PauseScreen(Screen):
                 self.font.render(line, 1, eval(self.aboutText[line])),
                 (self.w//4-100, i*50 + 125)
                 )
-        self.backBtn.draw()
+        self.endBtn.draw()
+        self.returnBtn.draw()
+        self.restartBtn.draw()
         #Drawing start title
         self.title.update(self.screen)
         pygame.display.update()
@@ -228,8 +247,14 @@ class PauseScreen(Screen):
                     self.updateTime()
                     return
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.backBtn.clicked():
+                    if self.returnBtn.clicked():
                         self.updateTime()
+                        return
+                    elif self.endBtn.clicked():
+                        self.endGame = True
+                        return
+                    elif self.restartBtn.clicked():
+                        self.restart = True
                         return
             self.redrawGame()
             self.clock.tick(self.FPS)
@@ -243,16 +268,17 @@ class EndScreen(Screen):
             winner.y = self.h//2
             winner.controls = None
         self.winners = winners
+        y = self.h - 40
         self.backBtn = Button(
             self.screen,
-            (self.w//2-160, self.h-50),
+            (self.w//2-160, y),
             'Back to menu',
             pad=5,
             center=1
             )
         self.playBtn = Button(
             self.screen,
-            (self.w//2+135, self.h-50),
+            (self.w//2+135, y),
             'Play again',
             pad=5,
             center=1
@@ -266,7 +292,7 @@ class EndScreen(Screen):
         base = resourcePath(path=True, subdir=self.subPath)
         frames = [
             pygame.image.load(resourcePath(img, subdir=self.subPath))
-            for img in os.listdir(base) if img.startswith('end')
+            for img in os.listdir(base) if img.startswith('end_frame')
             ]
         self.title = Animation(frames, (self.w//4 - 20, 10))
         self.playAgain = False
@@ -321,11 +347,12 @@ class EndScreen(Screen):
 class Game(Screen):
     ''' Class for the main game screen '''
     def __init__(self, screen, names, **kwargs):
-        super().__init__(screen, fontsize=60)
+        super().__init__(screen, fontsize=40)
         self.displayFont = pygame.font.SysFont('Garamond', 125)
         self.pauseBtn = Button(self.screen, (self.w//2-70, self.h-100), 'Pause', pad=5)
         self.ball = Ball(self.w//2, self.h//2, 20, (0, self.w), (0, self.h))
-        self.sprites.add(
+        self.playerSprites = pygame.sprite.Group()
+        self.playerSprites.add(
             Player(
                 75, self.h//2-10, 35, RED,
                 (0, self.w//2), (0, self.h),
@@ -335,8 +362,9 @@ class Game(Screen):
                 self.w-75, self.h//2-10, 35, BLUE,
                 (self.w//2, self.w), (0, self.h),
                 controls='IKJL'
-                ),
-            self.ball)
+                )
+            )
+        self.sprites.add(*self.playerSprites, self.ball)
         for i, sprite in enumerate(self.sprites):
             if i == len(names):
                 break
@@ -414,26 +442,22 @@ class Game(Screen):
         #Drawing game time
         if self.showTime:
             text = self.font.render(self.elapsedTime, 1, RED)
-            self.screen.blit(text, (self.w//2 - 50, 50))
+            self.screen.blit(text, (self.w//2 - 53, 50))
         if self.showGoal:
             self.displayText('Goal!', (self.w//3 + 25, self.h//4 + 50))
         #Updating sprites
         self.sprites.update(self.screen)
-        for sprite in self.sprites:
-            if callable(getattr(sprite, 'checkCollision', None)):
-                sprite.checkCollision(self.ball)
-            else:
-                break
+        [sprite.checkCollision(self.ball) for sprite in self.playerSprites]
         #Updating game time
         self.updateTime()
         #Drawing UI
         self.pauseBtn.draw()
         pygame.display.update()
 
-    def timeUpWinner(self):
+    def getWinner(self):
         ''' Compares player scores and returns the winner '''
         maxScore = -1
-        for sprite in self.sprites:
+        for sprite in self.playerSprites:
             if sprite.score == maxScore:
                 winner = None
                 break
@@ -460,14 +484,18 @@ class Game(Screen):
                     return
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.pauseBtn.clicked():
-                        pauseTime = PauseScreen(
-                            self.screen, self.scoreToWin, self.endTime
-                            ).pauseTime
-                        self.startTime += pauseTime
+                        pauseScreen = PauseScreen(self.screen, self.scoreToWin, self.endTime)
+                        self.run = pauseScreen.restart
+                        if self.run:
+                            return
+                        if pauseScreen.endGame:
+                            self.gameOver(self.getWinner())
+                            return
+                        self.startTime += pauseScreen.pauseTime
             self.checkGoal()
             #Checking if player has scored the required no. of goals to win
-            for sprite in self.sprites:
-                if hasattr(sprite, 'score') and sprite.score == self.scoreToWin:
+            for sprite in self.playerSprites:
+                if sprite.score == self.scoreToWin:
                     self.gameOver(sprite)
                     return
             #Checking if time is up
@@ -479,7 +507,7 @@ class Game(Screen):
                 counter = time.time()
                 while time.time() - counter < self.goalTextTime:
                     pass
-                self.gameOver(self.timeUpWinner())
+                self.gameOver(self.getWinner())
                 return
             self.redrawGame()
             self.clock.tick(self.FPS)

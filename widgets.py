@@ -5,9 +5,8 @@ Includes:
     2. Input box
     3. Basic pygame screen
 '''
-
 import pygame
-
+pygame.font.init()
 #Defining game colours
 WHITE = (255, 255, 255)
 GREEN = (0, 200, 0)
@@ -116,13 +115,13 @@ class InputBox:
 
 class Screen:
     ''' Base class for the pygame game screen '''
-    def __init__(self, screen, FPS=60, fontsize=40):
+    def __init__(self, screen, FPS=60, fontsize=30):
         self.screen = screen
         self.w, self.h = self.screen.get_size()
         self.sprites = pygame.sprite.Group()
         self.FPS = FPS
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont('Didot', fontsize)
+        self.font = pygame.font.SysFont('Segoe UI Black', fontsize)
 
     def drawHockeyGround(self):
         ''' Draws the hockey field '''

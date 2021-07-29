@@ -38,7 +38,7 @@ class Player(pygame.sprite.Sprite):
             self.controls = controls
 
     def checkCollision(self, ball):
-        ''' Checks for collision between player and ball '''
+        ''' Checks for collision between player and ball, and bounces ball '''
         dist = math.sqrt((self.x-ball.x)**2 + (self.y-ball.y)**2) - (self.r + ball.r + ball.vel)
         if dist > 0:
             return False
@@ -70,7 +70,7 @@ class Player(pygame.sprite.Sprite):
 
     def drawScore(self, screen):
         ''' Draws the players score '''
-        font = pygame.font.SysFont('Didot', 40)
+        font = pygame.font.SysFont('Segoe UI Black', 30)
         text = font.render(f'Score: {self.score}', 1, (0, 0, 0))
         if self.x < screen.get_width()//2:
             screen.blit(text, (self.xLimits[0] + 10, 0))
@@ -129,7 +129,7 @@ class Ball(pygame.sprite.Sprite):
         return goalYBounds and goalXBounds
 
     def bounce(self, direction):
-        ''' Bounces the ball from the given direction '''
+        ''' Bounces the ball from the boundaries '''
         if direction in ['up', 'down']:
             self.angle = -self.angle
             if direction == 'up':
